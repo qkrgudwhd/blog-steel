@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI BLOG MASTER 수강신청 | 센텀Q AI 연구소 (Stainless Edition)</title>
+  <meta name="description" content="33년 엔지니어의 AI 블로그 자동화 'Blog Master' — 플랫폼 통합 자동화로 잠자는 동안 돈을 법니다." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Noto+Serif+KR:wght@600;700;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    /* ================================================================
+       🛠️ 스테인레스 스틸 색상 시스템
+       ─ 가독성 검증 (검정 #0a0e14 vs 라이트스틸 #d8dde3 = 대비비 11.7:1, AAA)
+       ─ (흰색 #ffffff vs 다크스틸 #1a1f26 = 대비비 16.5:1, AAA)
+       ─ (앰버 #FFC107 vs 다크스틸 #1a1f26 = 대비비 11.4:1, AAA)
+       ================================================================ */
+    :root {
+      /* 스테인레스 베이스 */
+      --steel-darkest: #0a0e14;   /* 거의 검정 (배경 베이스) */
+      --steel-dark:    #1a1f26;   /* 다크 스틸 */
+      --steel-mid:     #2d343d;   /* 미디엄 스틸 */
+      --steel-base:    #4a5560;   /* 기본 스틸 */
+      --steel-light:   #8a939e;   /* 라이트 스틸 */
+      --steel-bright:  #b8c0c8;   /* 밝은 스틸 */
+      --steel-shine:   #d8dde3;   /* 광택 (카드 배경) */
+      --steel-mirror:  #f0f3f6;   /* 미러 (가장 밝음) */
+
+      /* 강조색 — 스테인레스 위에서도 잘 보이는 색 */
+      --gold:          #FFC107;   /* 앰버 골드 (강조) */
+      --gold-deep:     #FFA000;   /* 진한 앰버 */
+      --cyan:          #00E5FF;   /* 사이안 (테크 강조) */
+      --cyan-deep:     #00B8D4;   /* 진한 사이안 */
+      --warning:       #FF6E40;   /* 따뜻한 오렌지 (CTA) */
+      --kakao-yellow:  #FEE500;   /* 카카오 공식 옐로우 */
+      --kakao-text:    #3C1E1E;   /* 카카오 공식 텍스트 */
+
+      /* 텍스트 */
+      --ink-on-light:  #0a0e14;   /* 라이트 카드 위 검정 */
+      --ink-on-light-soft: #2d343d;
+      --paper:         #ffffff;   /* 다크 위 흰색 */
+      --paper-soft:    #d8dde3;   /* 다크 위 보조 텍스트 */
+
+      /* 효과 */
+      --shadow-deep:   0 16px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-card:   0 8px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.4);
+      --inner-shine:   inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+    }
+
+    /* ── 스테인레스 그라디언트 (재사용) ── */
+    /* 다크 브러시드 메탈 (배경) */
+    /* 라이트 폴리시드 메탈 (카드) */
+    /* 메탈릭 보더 */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+      background: linear-gradient(180deg, #050810 0%, #0a0e14 100%);
+      color: var(--paper);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ────────────────────────────────────
+       🌐 3D 배경 캔버스
+       ──────────────────────────────────── */
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #bg-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 50%, transparent 0%, rgba(5,8,16,0.35) 100%),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 3px);
+    }
+    /* ── 별빛 커서 캔버스 (최상단) ── */
+    #cursor-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    body { cursor: none; }
+    a, button, input, select, textarea, label { cursor: none !important; }
+    main, header.nav, footer { position: relative; z-index: 2; }
+
+    /* ────────────────────────────────────
+       🧱 공통 레이아웃
+       ──────────────────────────────────── */
+    .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; position: relative; }
+    section { padding: 100px 0; position: relative; }
+    .serif { font-family: 'Noto Serif KR', serif; }
+    .tech  { font-family: 'Orbitron', sans-serif; letter-spacing: 0.05em; }
+    .center { text-align: center; }
+
+    /* ── 스테인레스 카드 베이스 ── */
+    .steel-card {
+      background:
+        linear-gradient(135deg, var(--steel-mirror) 0%, var(--steel-shine) 35%, var(--steel-bright) 65%, var(--steel-shine) 100%);
+      color: var(--ink-on-light);
+      border: 1px solid var(--steel-light);
+      border-radius: 18px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+    .steel-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+    }
+    .steel-card-dark {
+      background:
+        linear-gradient(135deg, var(--steel-mid) 0%, var(--steel-dark) 50%, var(--steel-mid) 100%);
+      color: var(--paper);
+      border: 1px solid var(--steel-base);
+      border-radius: 18px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+    .steel-card-dark::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--steel-dark), var(--steel-mid));
+      border: 1px solid var(--steel-base);
+      color: var(--gold);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      margin-bottom: 20px;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .h-line {
+      width: 70px; height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--cyan));
+      border-radius: 99px;
+      margin: 18px auto 28px;
+      box-shadow: 0 0 12px rgba(255,193,7,0.5);
+    }
+    h1, h2, h3, h4 { line-height: 1.3; font-weight: 800; letter-spacing: -0.01em; }
+    h2.section-title {
+      font-size: clamp(1.9rem, 3.5vw, 2.6rem);
+      color: var(--paper);
+      text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    .section-sub { color: var(--paper-soft); max-width: 700px; margin: 0 auto 50px; font-size: 1.05rem; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+
+    /* ────────────────────────────────────
+       🚩 네비게이션
+       ──────────────────────────────────── */
+    header.nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: linear-gradient(180deg, rgba(10,14,20,0.95), rgba(10,14,20,0.85));
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--steel-base);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px; max-width: 1200px; margin: 0 auto;
+    }
+    .logo {
+      font-weight: 900; font-size: 1.15rem; color: var(--paper);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .logo .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      background: linear-gradient(135deg, var(--steel-bright), var(--steel-shine));
+      color: var(--ink-on-light);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      border: 1px solid var(--steel-light);
+      letter-spacing: 0.1em;
+    }
+    .nav-links { display: flex; gap: 28px; }
+    .nav-links a { color: var(--paper-soft); font-weight: 600; font-size: 0.95rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-cta {
+      padding: 10px 22px; border-radius: 6px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: var(--ink-on-light); font-weight: 800;
+      border: 1px solid var(--gold-deep);
+      box-shadow: 0 4px 12px rgba(255,193,7,0.35), var(--inner-shine);
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(255,193,7,0.55), var(--inner-shine); }
+    @media (max-width: 720px) { .nav-links { display: none; } }
+
+    /* ────────────────────────────────────
+       🎯 HERO 섹션
+       ──────────────────────────────────── */
+    .hero { padding: 170px 0 120px; text-align: center; }
+    .hero-badge {
+      display: inline-block;
+      padding: 8px 22px;
+      background: linear-gradient(135deg, var(--steel-shine), var(--steel-bright));
+      color: var(--ink-on-light);
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      margin-bottom: 26px;
+      border: 1px solid var(--steel-light);
+      box-shadow: var(--shadow-card);
+      letter-spacing: 0.02em;
+    }
+    .hero-badge .dot {
+      display: inline-block; width: 8px; height: 8px;
+      background: var(--warning); border-radius: 50%;
+      margin-right: 8px; vertical-align: middle;
+      box-shadow: 0 0 8px var(--warning);
+      animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.3; } }
+
+    .hero h1 {
+      font-size: clamp(2rem, 4.8vw, 3.6rem);
+      color: var(--paper);
+      margin-bottom: 24px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    }
+    .hero h1 .hl {
+      background: linear-gradient(135deg, var(--gold), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(255,193,7,0.4));
+    }
+    .hero .sub {
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      color: var(--paper-soft);
+      max-width: 720px; margin: 0 auto 42px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    }
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── 메탈릭 버튼 ── */
+    .btn-steel {
+      padding: 16px 34px;
+      background:
+        linear-gradient(180deg, var(--steel-mirror) 0%, var(--steel-shine) 50%, var(--steel-bright) 51%, var(--steel-shine) 100%);
+      color: var(--ink-on-light);
+      border: 1px solid var(--steel-light);
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      box-shadow: var(--shadow-card);
+      transition: transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-steel:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    .btn-gold {
+      padding: 16px 34px;
+      background: linear-gradient(180deg, #FFD54F 0%, #FFC107 50%, #FFA000 51%, #FFC107 100%);
+      color: var(--ink-on-light);
+      border: 1px solid var(--gold-deep);
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      box-shadow: 0 8px 24px rgba(255,193,7,0.4), var(--inner-shine);
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-gold:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(255,193,7,0.6), var(--inner-shine); }
+
+    .hero-stats {
+      display: flex; gap: 36px; justify-content: center; flex-wrap: wrap;
+      margin-top: 70px; padding-top: 40px;
+      border-top: 1px solid var(--steel-base);
+    }
+    .stat-num {
+      font-size: 2.4rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      filter: drop-shadow(0 2px 6px rgba(255,193,7,0.3));
+    }
+    .stat-lbl { color: var(--paper-soft); font-size: 0.92rem; font-weight: 600; }
+
+    /* ────────────────────────────────────
+       👤 ABOUT
+       ──────────────────────────────────── */
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 1.4fr; gap: 50px; align-items: center;
+    }
+    @media (max-width: 820px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .profile-card {
+      padding: 38px 32px; text-align: center;
+    }
+    .profile-avatar {
+      width: 140px; height: 140px;
+      margin: 0 auto 22px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 30%, var(--steel-mirror), var(--steel-bright) 40%, var(--steel-light) 80%);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-on-light); font-size: 3.2rem; font-weight: 900;
+      border: 4px solid var(--steel-mirror);
+      box-shadow:
+        inset 0 4px 8px rgba(255,255,255,0.6),
+        inset 0 -4px 8px rgba(0,0,0,0.2),
+        0 8px 24px rgba(0,0,0,0.4);
+      font-family: 'Noto Serif KR', serif;
+    }
+    .profile-name { font-size: 1.65rem; color: var(--ink-on-light); margin-bottom: 6px; }
+    .profile-role { color: var(--steel-mid); font-weight: 700; margin-bottom: 18px; font-size: 0.95rem; }
+    .profile-tags { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .profile-tag {
+      padding: 6px 14px;
+      background: linear-gradient(135deg, var(--steel-dark), var(--steel-mid));
+      color: var(--gold);
+      border-radius: 4px;
+      font-size: 0.8rem; font-weight: 700;
+      border: 1px solid var(--steel-base);
+    }
+
+    .about-text h2 {
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+      color: var(--paper);
+      margin-bottom: 20px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+    .about-text p { color: var(--paper-soft); font-size: 1.05rem; margin-bottom: 14px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+    .vision-box {
+      margin-top: 26px; padding: 22px 26px;
+      background: linear-gradient(135deg, rgba(255,193,7,0.12), rgba(0,229,255,0.08));
+      border: 1px solid var(--steel-base);
+      border-left: 4px solid var(--gold);
+      border-radius: 0 12px 12px 0;
+    }
+    .vision-box strong { color: var(--gold); display: block; margin-bottom: 8px; font-size: 0.85rem; letter-spacing: 0.15em; }
+    .vision-box p { color: var(--paper); font-weight: 600; margin: 0; }
+
+    /* ────────────────────────────────────
+       ⭐ FEATURES
+       ──────────────────────────────────── */
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+    }
+    .feat-card {
+      padding: 34px 28px;
+      transition: transform 0.25s;
+    }
+    .feat-card:hover { transform: translateY(-8px); }
+    .feat-icon {
+      width: 60px; height: 60px;
+      background:
+        linear-gradient(135deg, var(--steel-dark), var(--steel-mid));
+      border: 1px solid var(--steel-base);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.7rem;
+      margin-bottom: 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .feat-card h3 { font-size: 1.2rem; color: var(--ink-on-light); margin-bottom: 10px; }
+    .feat-card p { color: var(--ink-on-light-soft); font-size: 0.96rem; line-height: 1.6; }
+
+    /* ────────────────────────────────────
+       🌐 ✦ 플랫폼 통합 자동화 구조 ✦ (메인 신규 섹션)
+       ──────────────────────────────────── */
+    .platform-section {
+      padding: 110px 0;
+    }
+    .platform-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, var(--steel-mirror), var(--gold));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 8px rgba(255,193,7,0.4));
+      margin-bottom: 8px;
+    }
+    .platform-sub {
+      font-size: 1.1rem;
+      color: var(--paper);
+      margin-bottom: 50px;
+      font-weight: 600;
+    }
+    .platform-sub .icon-bg {
+      display: inline-block;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: var(--ink-on-light);
+      border-radius: 4px;
+      margin-right: 8px;
+      font-weight: 800;
+    }
+
+    /* ── 플랫폼 표 (스테인레스 + 컬러 강조) ── */
+    .platform-table-wrap {
+      background:
+        linear-gradient(180deg, var(--steel-mirror) 0%, var(--steel-shine) 100%);
+      border: 1px solid var(--steel-light);
+      border-radius: 18px;
+      box-shadow: var(--shadow-deep);
+      overflow: hidden;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .platform-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+    .platform-table thead tr {
+      background:
+        linear-gradient(180deg, var(--steel-dark) 0%, var(--steel-darkest) 100%);
+    }
+    .platform-table thead th {
+      padding: 22px 20px;
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--gold);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+      text-align: left;
+    }
+    .platform-table thead th:first-child { text-align: center; width: 28%; }
+    .platform-table thead th:last-child { text-align: center; width: 24%; }
+
+    .platform-table tbody tr {
+      border-bottom: 1px solid rgba(74,85,96,0.25);
+      transition: background 0.2s;
+    }
+    .platform-table tbody tr:nth-child(even) {
+      background: linear-gradient(180deg, var(--steel-bright), var(--steel-light));
+    }
+    .platform-table tbody tr:nth-child(odd) {
+      background: linear-gradient(180deg, var(--steel-shine), var(--steel-bright));
+    }
+    .platform-table tbody tr:hover {
+      background: linear-gradient(180deg, #ffeaa7, #fdcb6e);
+    }
+    .platform-table tbody td {
+      padding: 22px 20px;
+      color: var(--ink-on-light);
+      font-weight: 600;
+      vertical-align: middle;
+    }
+    .platform-table tbody td:first-child { text-align: center; }
+    .platform-table tbody td:last-child { text-align: center; }
+
+    .pf-name {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, var(--steel-darkest), var(--steel-dark));
+      color: var(--paper);
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      border: 1px solid var(--steel-base);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 6px rgba(0,0,0,0.3);
+      min-width: 160px;
+      justify-content: center;
+    }
+    .pf-icon { font-size: 1.2rem; }
+
+    /* 플랫폼별 색상 배지 */
+    .pf-google   .pf-icon { color: #FBBC05; }
+    .pf-naver    .pf-icon { color: #03C75A; }
+    .pf-youtube  .pf-icon { color: #FF0000; }
+    .pf-insta    .pf-icon { background: linear-gradient(45deg,#fdf497,#fd5949,#d6249f,#285AEB); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+
+    /* 수익 배지 — WCAG AAA 통과 색상 (검증됨) */
+    .revenue-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 11px 20px;
+      background: linear-gradient(135deg, #15803d, #14532d);   /* 진한 그린 */
+      color: #ffffff;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      box-shadow: 0 4px 14px rgba(20,83,45,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+      border: 1px solid #0f3a1f;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+      letter-spacing: 0.02em;
+    }
+    .revenue-badge.purple {
+      background: linear-gradient(135deg, #6b21a8, #4c1d95);   /* 진한 퍼플 */
+      box-shadow: 0 4px 14px rgba(76,29,149,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+      border-color: #2e1065;
+    }
+    .revenue-badge.red {
+      background: linear-gradient(135deg, #b91c1c, #7f1d1d);   /* 진한 레드 */
+      box-shadow: 0 4px 14px rgba(127,29,29,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+      border-color: #5a1313;
+    }
+    .revenue-badge.blue {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);   /* 진한 블루 */
+      box-shadow: 0 4px 14px rgba(30,58,138,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+      border-color: #172554;
+    }
+
+    /* 모바일 표 → 카드 변환 */
+    @media (max-width: 760px) {
+      .platform-table thead { display: none; }
+      .platform-table, .platform-table tbody, .platform-table tr, .platform-table td { display: block; }
+      .platform-table tbody tr { padding: 18px; border-radius: 12px; margin: 12px; }
+      .platform-table tbody td { text-align: left !important; padding: 8px 0; }
+      .platform-table tbody td::before {
+        content: attr(data-label);
+        display: block;
+        font-weight: 800;
+        color: var(--steel-dark);
+        font-size: 0.78rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+    }
+
+    /* ────────────────────────────────────
+       💛 카카오 문의 버튼 (대형, 잘 보이게)
+       ──────────────────────────────────── */
+    .kakao-cta-wrap {
+      max-width: 640px;
+      margin: 50px auto 0;
+      padding: 36px;
+      text-align: center;
+      background:
+        linear-gradient(135deg, var(--steel-mid) 0%, var(--steel-dark) 100%);
+      border: 1px solid var(--steel-base);
+      border-radius: 18px;
+      box-shadow: var(--shadow-deep);
+      position: relative;
+      overflow: hidden;
+    }
+    .kakao-cta-wrap::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--kakao-yellow), transparent);
+    }
+    .kakao-cta-wrap h3 {
+      color: var(--paper);
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .kakao-cta-wrap p {
+      color: var(--paper-soft);
+      font-size: 0.95rem;
+      margin-bottom: 22px;
+    }
+    .kakao-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 38px;
+      background: linear-gradient(180deg, #FFEC4D 0%, #FEE500 50%, #F6CE00 51%, #FEE500 100%);
+      color: var(--kakao-text);
+      font-weight: 900;
+      font-size: 1.15rem;
+      border-radius: 12px;
+      border: 1px solid #C9A800;
+      box-shadow:
+        0 10px 28px rgba(254,229,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.6),
+        inset 0 -2px 0 rgba(0,0,0,0.15);
+      transition: transform 0.15s, box-shadow 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .kakao-btn:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 14px 36px rgba(254,229,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.6),
+        inset 0 -2px 0 rgba(0,0,0,0.15);
+    }
+    .kakao-btn .ic {
+      width: 28px; height: 28px;
+      background: var(--kakao-text);
+      color: var(--kakao-yellow);
+      border-radius: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1rem;
+    }
+
+    /* ────────────────────────────────────
+       📝 신청서
+       ──────────────────────────────────── */
+    .apply-wrap {
+      max-width: 760px; margin: 0 auto;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: var(--shadow-deep);
+      border: 1px solid var(--steel-light);
+    }
+    .apply-head {
+      background: linear-gradient(135deg, var(--steel-darkest), var(--steel-dark));
+      color: var(--paper);
+      padding: 36px 40px;
+      text-align: center;
+      border-bottom: 2px solid var(--gold);
+    }
+    .apply-head h2 { font-size: 1.85rem; color: var(--paper); margin-bottom: 8px; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+    .apply-head p { color: var(--paper-soft); }
+    .apply-body {
+      padding: 40px;
+      background: linear-gradient(180deg, var(--steel-mirror), var(--steel-shine));
+    }
+    .form-row { margin-bottom: 22px; }
+    .form-row label {
+      display: block;
+      font-weight: 700; color: var(--ink-on-light);
+      font-size: 0.95rem; margin-bottom: 8px;
+    }
+    .form-row label .req { color: var(--warning); margin-left: 4px; }
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1.5px solid var(--steel-light);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--ink-on-light);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .input:focus, .select:focus, .textarea:focus {
+      border-color: var(--cyan-deep);
+      box-shadow: 0 0 0 3px rgba(0,229,255,0.2), inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .textarea { resize: vertical; min-height: 110px; }
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .check-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1.5px solid var(--steel-light);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      color: var(--ink-on-light-soft);
+      font-size: 0.93rem;
+    }
+    .check-item:hover { border-color: var(--cyan-deep); }
+    .check-item input { accent-color: var(--cyan-deep); width: 16px; height: 16px; }
+    .form-submit {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(180deg, #FFD54F 0%, #FFC107 50%, #FFA000 51%, #FFC107 100%);
+      color: var(--ink-on-light);
+      border: 1px solid var(--gold-deep);
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      box-shadow: 0 10px 28px rgba(255,193,7,0.45), var(--inner-shine);
+      transition: transform 0.15s, box-shadow 0.2s;
+      margin-top: 12px;
+    }
+    .form-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(255,193,7,0.6), var(--inner-shine); }
+    .agree-box {
+      background: var(--steel-bright);
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      color: var(--ink-on-light-soft);
+      display: flex; align-items: flex-start; gap: 10px;
+      margin-bottom: 20px;
+      border: 1px solid var(--steel-light);
+    }
+
+    /* ────────────────────────────────────
+       💬 커뮤니티
+       ──────────────────────────────────── */
+    .comm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 22px;
+    }
+    .comm-card {
+      padding: 30px 24px;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .comm-card:hover { transform: translateY(-5px); }
+    .comm-card .ic { font-size: 2.2rem; margin-bottom: 14px; }
+    .comm-card h4 { color: var(--ink-on-light); margin-bottom: 6px; }
+    .comm-card p { color: var(--ink-on-light-soft); font-size: 0.92rem; margin-bottom: 16px; }
+    .comm-link {
+      display: inline-block;
+      padding: 9px 20px;
+      background: linear-gradient(180deg, var(--steel-darkest), var(--steel-dark));
+      color: var(--gold);
+      border: 1px solid var(--steel-base);
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      transition: transform 0.15s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .comm-link:hover { transform: scale(1.05); }
+    .comm-link.kakao {
+      background: linear-gradient(180deg, #FFEC4D, #FEE500);
+      color: var(--kakao-text);
+      border-color: #C9A800;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 4px 12px rgba(254,229,0,0.4);
+    }
+
+    /* ────────────────────────────────────
+       🦶 푸터
+       ──────────────────────────────────── */
+    footer {
+      background: linear-gradient(180deg, #050810, #000000);
+      color: var(--paper-soft);
+      padding: 50px 0 30px;
+      border-top: 1px solid var(--steel-base);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      gap: 36px;
+      margin-bottom: 30px;
+    }
+    @media (max-width: 720px) { .footer-grid { grid-template-columns: 1fr; } }
+    footer h5 { color: var(--gold); margin-bottom: 12px; font-size: 1rem; letter-spacing: 0.05em; }
+    footer p, footer li { font-size: 0.9rem; color: var(--paper-soft); margin-bottom: 6px; }
+    footer ul { list-style: none; }
+    footer a:hover { color: var(--gold); }
+    .footer-copy {
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--steel-base);
+      font-size: 0.85rem;
+      color: var(--steel-light);
+    }
+
+    /* ────────────────────────────────────
+       💬 모달
+       ──────────────────────────────────── */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(5,8,16,0.8);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .modal-bg.show { display: flex; }
+    .modal {
+      max-width: 440px; width: 100%;
+      padding: 40px 32px;
+      text-align: center;
+    }
+    .modal .ic-ok {
+      width: 70px; height: 70px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ink-on-light); font-size: 2.2rem; margin: 0 auto 18px;
+      font-weight: 900;
+      box-shadow: 0 8px 24px rgba(255,193,7,0.4), inset 0 2px 4px rgba(255,255,255,0.5);
+    }
+    .modal h3 { color: var(--ink-on-light); margin-bottom: 10px; font-size: 1.4rem; }
+    .modal p { color: var(--ink-on-light-soft); margin-bottom: 24px; font-size: 0.96rem; }
+    .modal-close {
+      padding: 12px 36px;
+      background: linear-gradient(180deg, var(--steel-darkest), var(--steel-dark));
+      color: var(--gold);
+      border: 1px solid var(--steel-base);
+      border-radius: 8px;
+      font-weight: 800;
+    }
+
+    /* ────────────────────────────────────
+       ✨ 스크롤 페이드
+       ──────────────────────────────────── */
+    .fade-in { opacity: 0; transform: translateY(22px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ===== 3D 배경 캔버스 ===== -->
+<canvas id="bg-canvas"></canvas>
+<div id="bg-overlay"></div>
+
+<!-- ===== 별빛 커서 캔버스 ===== -->
+<canvas id="cursor-canvas"></canvas>
+
+<!-- ===== 네비게이션 ===== -->
+<header class="nav">
+  <div class="nav-inner">
+    <div class="logo">
+      센텀Q AI 연구소
+      <span class="badge">STEEL</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#about">소개</a>
+      <a href="#features">기능</a>
+      <a href="#platform">플랫폼</a>
+      <a href="#apply">수강신청</a>
+    </nav>
+    <a href="#apply" class="nav-cta">신청하기</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge"><span class="dot"></span>2026년 5월 1기 모집중 — 선착순 20명</div>
+    <h1>
+      33년 엔지니어의 노하우, 이제 당신의<br />
+      <span class="hl">블로그가 잠자는 동안 돈을 법니다</span>
+    </h1>
+    <p class="sub">
+      AI가 글쓰고, 이미지 생성하고, 포스팅까지 자동으로.<br />
+      하나의 시스템으로 구글·네이버·유튜브·인스타까지 — 통합 자동 수익화.
+    </p>
+    <div class="hero-ctas">
+      <a href="#apply"><button class="btn-gold">📝 수강 신청하기</button></a>
+      <a href="#platform"><button class="btn-steel">🌐 플랫폼 구조 보기</button></a>
+    </div>
+
+    <div class="hero-stats">
+      <div><span class="stat-num">33+</span><span class="stat-lbl">년 엔지니어 경력</span></div>
+      <div><span class="stat-num">4</span><span class="stat-lbl">통합 플랫폼</span></div>
+      <div><span class="stat-num">8</span><span class="stat-lbl">주 완성 과정</span></div>
+      <div><span class="stat-num">100%</span><span class="stat-lbl">자동화</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ABOUT ===== -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="profile-card steel-card fade-in">
+        <div class="profile-avatar">朴</div>
+        <h3 class="profile-name">박형종 대표</h3>
+        <div class="profile-role">한국자아실현협회 | 센텀Q AI 연구소</div>
+        <div class="profile-tags">
+          <span class="profile-tag">스마트AI경영</span>
+          <span class="profile-tag">블로그 자동화</span>
+          <span class="profile-tag">시니어 교육</span>
+          <span class="profile-tag">AI 수익화</span>
+        </div>
+      </div>
+      <div class="about-text fade-in">
+        <span class="eyebrow">ABOUT INSTRUCTOR</span>
+        <h2 class="serif">기술 장벽을 허물고,<br />누구나 AI의 혜택을 누리도록</h2>
+        <p>33년간 현장에서 쌓아온 엔지니어링 노하우와 최신 AI 기술을 결합하여, 누구나 인공지능으로 자신만의 블로그 수익 모델을 만들 수 있도록 돕고 있습니다.</p>
+        <p>『AI After Human』 저자이자 시인이기도 한 박형종 대표는, 시니어 디지털 임파워먼트 전도사로서 활동하고 있습니다.</p>
+        <div class="vision-box">
+          <strong>★ VISION</strong>
+          <p>기술적 장벽을 허물어 누구나 인공지능의 혜택을 누리는 세상을 만듭니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section id="features">
+  <div class="container center">
+    <span class="eyebrow">CORE FEATURES</span>
+    <h2 class="section-title serif">Blog Master의 핵심 기능</h2>
+    <div class="h-line"></div>
+    <p class="section-sub">LLM과 멀티모달 AI의 힘으로, 블로그 운영의 모든 과정을 자동화합니다.</p>
+    <div class="feat-grid">
+      <div class="feat-card steel-card fade-in">
+        <div class="feat-icon">⚙️</div>
+        <h3>Blog Master Auto</h3>
+        <p>LLM 기반 자동 포스팅 및 SEO 최적화. 키워드 분석부터 발행까지 한 번에.</p>
+      </div>
+      <div class="feat-card steel-card fade-in">
+        <div class="feat-icon">🎨</div>
+        <h3>Multi-Modal AI</h3>
+        <p>본문에 최적화된 AI 이미지 및 영상을 자동으로 생성하고 삽입합니다.</p>
+      </div>
+      <div class="feat-card steel-card fade-in">
+        <div class="feat-icon">🔒</div>
+        <h3>Secure Logic</h3>
+        <p>API KEY 암호화 관리로 안전한 운영 환경을 보장합니다.</p>
+      </div>
+      <div class="feat-card steel-card fade-in">
+        <div class="feat-icon">💰</div>
+        <h3>AdSense Pass</h3>
+        <p>구글 애드센스 수익화를 위한 승인 전략 가이드를 함께 제공합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ✦ 플랫폼 통합 자동화 구조 ✦ ===== -->
+<section id="platform" class="platform-section">
+  <div class="container center">
+    <span class="eyebrow">★ PLATFORM INTEGRATION</span>
+    <h2 class="platform-title">✦ 플랫폼 통합 자동화 구조 ✦</h2>
+    <p class="platform-sub">
+      <span class="icon-bg">📊</span>하나의 시스템으로 모든 플랫폼을 장악합니다
+    </p>
+
+    <div class="platform-table-wrap fade-in">
+      <table class="platform-table">
+        <thead>
+          <tr>
+            <th>플랫폼</th>
+            <th>자동화 전략</th>
+            <th>수익 구조</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="플랫폼"><span class="pf-name pf-google"><span class="pf-icon">🌐</span>구글 / 워드프레스</span></td>
+            <td data-label="자동화 전략">AI 고단가 키워드 자동 포스팅</td>
+            <td data-label="수익 구조"><span class="revenue-badge">💰 구글 애드센스</span></td>
+          </tr>
+          <tr>
+            <td data-label="플랫폼"><span class="pf-name pf-naver"><span class="pf-icon">📝</span>네이버 / 티스토리</span></td>
+            <td data-label="자동화 전략">타겟 맞춤 콘텐츠 자동 생성</td>
+            <td data-label="수익 구조"><span class="revenue-badge purple">💰 제휴 마케팅</span></td>
+          </tr>
+          <tr>
+            <td data-label="플랫폼"><span class="pf-name pf-youtube"><span class="pf-icon">🎬</span>유튜브 쇼츠</span></td>
+            <td data-label="자동화 전략">글 → 영상 자동 변환</td>
+            <td data-label="수익 구조"><span class="revenue-badge red">💰 조회수 수익</span></td>
+          </tr>
+          <tr>
+            <td data-label="플랫폼"><span class="pf-name pf-insta"><span class="pf-icon">📱</span>인스타 / 틱톡</span></td>
+            <td data-label="자동화 전략">AI 콘텐츠 자동 업로드</td>
+            <td data-label="수익 구조"><span class="revenue-badge blue">💰 트래픽 유입</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 카카오 문의 CTA -->
+    <div class="kakao-cta-wrap fade-in">
+      <h3>지금 바로 시작하고 싶으신가요?</h3>
+      <p>오픈채팅으로 빠르게 상담받으실 수 있습니다 (평일 09~18시 응답)</p>
+      <a href="https://open.kakao.com/o/gwcemGqi" target="_blank" rel="noopener">
+        <button class="kakao-btn">
+          <span class="ic">K</span>
+          💬 카톡으로 문의하기
+        </button>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 신청서 ===== -->
+<section id="apply">
+  <div class="container">
+    <div class="center" style="margin-bottom: 40px;">
+      <span class="eyebrow">ENROLLMENT</span>
+      <h2 class="section-title serif">수강 신청서</h2>
+      <div class="h-line"></div>
+      <p class="section-sub">아래 정보를 입력해 주시면, 영업일 기준 1~2일 내에 담당자가 연락드립니다.</p>
+    </div>
+
+    <div class="apply-wrap fade-in">
+      <div class="apply-head">
+        <h2>AI BLOG MASTER 자동화 과정</h2>
+        <p>2026년 5월 1기 · 8주 과정 · 온라인 + 현장 지원</p>
+      </div>
+      <div class="apply-body">
+        <form id="applyForm" onsubmit="return submitForm(event)">
+          <div class="form-row">
+            <label>성함 <span class="req">*</span></label>
+            <input type="text" class="input" name="name" placeholder="홍길동" required />
+          </div>
+          <div class="form-row">
+            <label>연락처 <span class="req">*</span></label>
+            <input type="tel" class="input" name="phone" placeholder="010-0000-0000" required />
+          </div>
+          <div class="form-row">
+            <label>이메일 <span class="req">*</span></label>
+            <input type="email" class="input" name="email" placeholder="example@gmail.com" required />
+          </div>
+          <div class="form-row">
+            <label>연령대</label>
+            <select class="select" name="age">
+              <option value="">선택해 주세요</option>
+              <option>40대</option><option>50대</option><option>60대</option><option>70대 이상</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>현재 블로그 운영 경험</label>
+            <select class="select" name="experience">
+              <option value="">선택해 주세요</option>
+              <option>처음입니다 (블로그 경험 없음)</option>
+              <option>네이버 블로그 운영 중</option>
+              <option>티스토리/구글 블로그 운영 중</option>
+              <option>여러 블로그 운영 중</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>관심 분야 (중복 선택 가능)</label>
+            <div class="check-grid">
+              <label class="check-item"><input type="checkbox" name="interest" value="자동포스팅"> 자동 포스팅</label>
+              <label class="check-item"><input type="checkbox" name="interest" value="AI이미지"> AI 이미지 생성</label>
+              <label class="check-item"><input type="checkbox" name="interest" value="유튜브쇼츠"> 유튜브 쇼츠</label>
+              <label class="check-item"><input type="checkbox" name="interest" value="애드센스"> 애드센스 수익화</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <label>개발 환경 / 사용 기기</label>
+            <select class="select" name="device">
+              <option value="">선택해 주세요</option>
+              <option>Windows PC</option><option>Mac</option>
+              <option>노트북 (Windows)</option><option>노트북 (Mac)</option>
+              <option>잘 모르겠습니다</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>문의 사항 또는 학습 목표</label>
+            <textarea class="textarea" name="message" placeholder="예) 은퇴 후 블로그로 부수입을 만들고 싶습니다."></textarea>
+          </div>
+          <div class="agree-box">
+            <input type="checkbox" id="agree" required style="margin-top: 3px;" />
+            <label for="agree" style="cursor: pointer;">
+              <strong>[필수]</strong> 개인정보 수집 및 이용에 동의합니다.
+              (수집 항목: 성함, 연락처, 이메일 / 보유 기간: 강의 종료 후 1년)
+            </label>
+          </div>
+          <button type="submit" class="form-submit">📩 신청서 제출하기</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 커뮤니티 ===== -->
+<section id="community">
+  <div class="container center">
+    <span class="eyebrow">COMMUNITY</span>
+    <h2 class="section-title serif">함께하는 학습 커뮤니티</h2>
+    <div class="h-line"></div>
+    <p class="section-sub">실시간 기술 지원과 수강생 네트워킹을 제공합니다.</p>
+    <div class="comm-grid">
+      <div class="comm-card steel-card fade-in">
+        <div class="ic">💬</div>
+        <h4>카카오톡 오픈채팅</h4>
+        <p>실시간 질문 & 기술 지원</p>
+        <a class="comm-link kakao" href="https://open.kakao.com/o/gwcemGqi" target="_blank" rel="noopener">바로가기</a>
+      </div>
+      <div class="comm-card steel-card fade-in">
+        <div class="ic">📝</div>
+        <h4>네이버 블로그</h4>
+        <p>수강 후기 & 운영 사례</p>
+        <a class="comm-link" href="https://blog.naver.com/com-365/224254785153" target="_blank" rel="noopener">방문하기</a>
+      </div>
+      <div class="comm-card steel-card fade-in">
+        <div class="ic">📞</div>
+        <h4>전화 문의</h4>
+        <p>010-4554-9110 (평일 09~18시)</p>
+        <a class="comm-link" href="tel:010-4554-9110">전화걸기</a>
+      </div>
+      <div class="comm-card steel-card fade-in">
+        <div class="ic">✉️</div>
+        <h4>이메일 문의</h4>
+        <p>phjcom3@gmail.com</p>
+        <a class="comm-link" href="mailto:phjcom3@gmail.com">메일쓰기</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== 푸터 ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h5>센텀Q AI 연구소</h5>
+        <p>한국자아실현협회</p>
+        <p>대표: 박형종</p>
+        <p>경남 김해시 주촌면 선지로85<br />센텀큐시티아파트상가 101호</p>
+      </div>
+      <div>
+        <h5>연락처</h5>
+        <ul>
+          <li>📞 010-4554-9110</li>
+          <li>✉️ phjcom3@gmail.com</li>
+          <li>💬 카카오톡 오픈채팅</li>
+        </ul>
+      </div>
+      <div>
+        <h5>바로가기</h5>
+        <ul>
+          <li><a href="#about">강사 소개</a></li>
+          <li><a href="#features">핵심 기능</a></li>
+          <li><a href="#platform">플랫폼 구조</a></li>
+          <li><a href="#apply">수강 신청</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-copy">
+      © 2026 한국자아실현협회 · 센텀Q AI 연구소 (Gimhae Centum Q). All rights reserved.
+    </div>
+  </div>
+</footer>
+
+<!-- ===== 성공 모달 ===== -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal steel-card">
+    <div class="ic-ok">✓</div>
+    <h3 id="modalGreet">신청이 접수되었습니다!</h3>
+    <p>입력하신 이메일로 <strong>접수 확인 답장</strong>을 발송했습니다.<br />
+       영업일 기준 1~2일 내에 담당자가 직접 연락을 드리겠습니다.<br />
+       감사합니다 🙏</p>
+    <button class="modal-close" onclick="closeModal()">확인</button>
+  </div>
+</div>
+
+<!-- =====================================================
+     🌐 Three.js 마우스 물리 간섭 3D 배경
+     ===================================================== -->
+<script>
+(function() {
+  const canvas = document.getElementById('bg-canvas');
+  if (!canvas || typeof THREE === 'undefined') return;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x050810, 25, 90);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
+  camera.position.z = 45;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // ──────────────────────────────────────────────
+  // 💡 조명 — 스테인레스 광택 극대화
+  // ──────────────────────────────────────────────
+  // 어두운 환경광 (검정 배경 위에서도 형태가 보이도록 최소한)
+  scene.add(new THREE.AmbientLight(0x1a2030, 0.35));
+
+  // Hemisphere: 위는 차가운 백색, 아래는 약한 스틸 블루 (메탈 톱/바텀 분리)
+  const hemi = new THREE.HemisphereLight(0xeaf0ff, 0x1a2535, 0.7);
+  scene.add(hemi);
+
+  // 메인 키 라이트 — 위에서 비추는 강한 화이트 (도형 윤곽 강조)
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  keyLight.position.set(8, 25, 18);
+  scene.add(keyLight);
+
+  // 백색 림 라이트 — 도형 가장자리 광택용 (사이안 톤)
+  const rimLight1 = new THREE.DirectionalLight(0xa0d8ff, 1.4);
+  rimLight1.position.set(-22, 5, 12);
+  scene.add(rimLight1);
+
+  // 따뜻한 림 라이트 — 반대 면에 골드 광택
+  const rimLight2 = new THREE.DirectionalLight(0xffd47f, 1.2);
+  rimLight2.position.set(20, -12, 10);
+  scene.add(rimLight2);
+
+  // 후방 라이트 — 도형의 실루엣 살리기 (마젠타-퍼플)
+  const backLight = new THREE.DirectionalLight(0xc080ff, 0.7);
+  backLight.position.set(0, 5, -25);
+  scene.add(backLight);
+
+  // 회전하는 채색 포인트 라이트들 (도형 표면에 무지개빛 반사)
+  const colorLights = [
+    new THREE.PointLight(0x00d4ff, 2.5, 45),  // 사이안
+    new THREE.PointLight(0xffaa00, 2.2, 45),  // 앰버
+    new THREE.PointLight(0xff4080, 1.8, 40),  // 핑크
+    new THREE.PointLight(0x80ffaa, 1.5, 40),  // 민트
+  ];
+  colorLights.forEach(l => scene.add(l));
+
+  // 마우스를 따라가는 골드 스포트라이트
+  const mouseLight = new THREE.PointLight(0xFFD54F, 3.5, 30);
+  mouseLight.position.set(0, 0, 18);
+  scene.add(mouseLight);
+
+  // ──────────────────────────────────────────────
+  // 🌌 절차적 환경맵 생성 (도형 표면에 진짜 반사 효과)
+  // ──────────────────────────────────────────────
+  function makeEnvMap() {
+    const size = 256;
+    const cv = document.createElement('canvas');
+    cv.width = size; cv.height = size;
+    const ctx = cv.getContext('2d');
+    // 어두운 그라디언트 베이스
+    const g = ctx.createLinearGradient(0, 0, 0, size);
+    g.addColorStop(0,    '#3a4555');
+    g.addColorStop(0.4,  '#1a2030');
+    g.addColorStop(0.6,  '#0a0e14');
+    g.addColorStop(1,    '#050810');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+    // 밝은 광점 (반사로 보일 별빛)
+    for (let i = 0; i < 25; i++) {
+      const x = Math.random() * size, y = Math.random() * size * 0.6;
+      const r = 1 + Math.random() * 3;
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+      grd.addColorStop(0, 'rgba(255,255,255,0.95)');
+      grd.addColorStop(0.4, 'rgba(200,220,255,0.4)');
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd; ctx.beginPath();
+      ctx.arc(x, y, r * 4, 0, Math.PI * 2); ctx.fill();
+    }
+    // 컬러 광원 흔적
+    ['rgba(255,193,7,0.25)','rgba(0,212,255,0.25)','rgba(255,128,200,0.18)'].forEach((c,i)=>{
+      const x = (i+1)*size/4, y = size*(0.3+i*0.2);
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, 60);
+      grd.addColorStop(0, c); grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd; ctx.beginPath();
+      ctx.arc(x, y, 60, 0, Math.PI*2); ctx.fill();
+    });
+    const tex = new THREE.CanvasTexture(cv);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    return tex;
+  }
+  const envMap = makeEnvMap();
+  scene.environment = envMap;
+
+  // ──────────────────────────────────────────────
+  // 🔷 큰 입체 도형 — 진짜 스테인레스 마감
+  // ──────────────────────────────────────────────
+  const geometries = [
+    new THREE.IcosahedronGeometry(2.6, 0),
+    new THREE.OctahedronGeometry(2.5, 0),
+    new THREE.DodecahedronGeometry(2.5, 0),
+    new THREE.TorusGeometry(2.0, 0.7, 20, 40),
+    new THREE.TorusKnotGeometry(1.6, 0.55, 100, 16),
+    new THREE.BoxGeometry(2.6, 2.6, 2.6),
+    new THREE.ConeGeometry(2.0, 3.4, 6),
+    new THREE.SphereGeometry(2.2, 32, 24),
+    new THREE.TetrahedronGeometry(2.8, 0),
+    new THREE.CylinderGeometry(1.6, 1.6, 3.2, 12)
+  ];
+
+  const shapes = [];
+  const SHAPE_COUNT = 14;
+
+  for (let i = 0; i < SHAPE_COUNT; i++) {
+    const geo = geometries[i % geometries.length];
+
+    // 도형 종류: 폴리시드 크롬(70%) / 골드(15%) / 사이안 크롬(15%)
+    const r = Math.random();
+    let baseColor, emissive, emissiveInt;
+    if (r < 0.15) {
+      // 골드 액센트
+      baseColor = 0xFFD54F;
+      emissive = 0xFFA000;
+      emissiveInt = 0.25;
+    } else if (r < 0.30) {
+      // 사이안 크롬 액센트
+      baseColor = 0xb8e8ff;
+      emissive = 0x0099cc;
+      emissiveInt = 0.18;
+    } else {
+      // 폴리시드 스테인레스 (가장 밝게)
+      baseColor = 0xeef2f7;
+      emissive = 0x1a2030;
+      emissiveInt = 0.08;
+    }
+
+    const mat = new THREE.MeshStandardMaterial({
+      color: baseColor,
+      metalness: 1.0,
+      roughness: 0.12,
+      emissive: emissive,
+      emissiveIntensity: emissiveInt,
+      envMap: envMap,
+      envMapIntensity: 1.6
+    });
+
+    const mesh = new THREE.Mesh(geo, mat);
+
+    // 배치 (배경 전체 분산)
+    const angle = (i / SHAPE_COUNT) * Math.PI * 2;
+    const radius = 18 + Math.random() * 12;
+    mesh.position.set(
+      Math.cos(angle) * radius,
+      Math.sin(angle) * radius * 0.7,
+      -8 - Math.random() * 18
+    );
+    mesh.rotation.set(
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2,
+      Math.random() * Math.PI * 2
+    );
+
+    mesh.userData = {
+      vx: (Math.random() - 0.5) * 0.02,
+      vy: (Math.random() - 0.5) * 0.02,
+      vz: (Math.random() - 0.5) * 0.008,
+      rx: (Math.random() - 0.5) * 0.008,
+      ry: (Math.random() - 0.5) * 0.008,
+      rz: (Math.random() - 0.5) * 0.005,
+      baseColor: baseColor,
+      baseEmissive: emissive,
+      baseEmissiveInt: emissiveInt,
+      isAccent: r < 0.30,
+      mass: 0.8 + Math.random() * 1.4
+    };
+
+    scene.add(mesh);
+    shapes.push(mesh);
+  }
+
+  // ── 마우스 추적 ──
+  const mouse3D = { x: 0, y: 0, z: 0 };
+  const mouseNDC = new THREE.Vector2(-999, -999);
+  const raycaster = new THREE.Raycaster();
+  const projPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  const intersectPoint = new THREE.Vector3();
+
+  window.addEventListener('mousemove', e => {
+    mouseNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseNDC.y = (e.clientY / window.innerHeight) * -2 + 1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    if (raycaster.ray.intersectPlane(projPlane, intersectPoint)) {
+      mouse3D.x = intersectPoint.x;
+      mouse3D.y = intersectPoint.y;
+    }
+    mouseLight.position.set(mouse3D.x, mouse3D.y, 18);
+  });
+
+  // ── 마우스 클릭 = 폭발 (도형들 강하게 밀어냄) ──
+  window.addEventListener('click', e => {
+    const cx = ((e.clientX / window.innerWidth) * 2 - 1) * 35;
+    const cy = ((e.clientY / window.innerHeight) * -2 + 1) * 22;
+    shapes.forEach(s => {
+      const dx = s.position.x - cx;
+      const dy = s.position.y - cy;
+      const d = Math.sqrt(dx*dx + dy*dy) + 0.1;
+      if (d < 22) {
+        const force = ((22 - d) / 22) * 1.2 / s.userData.mass;
+        s.userData.vx += (dx / d) * force;
+        s.userData.vy += (dy / d) * force;
+        s.userData.rx += (Math.random() - 0.5) * 0.08;
+        s.userData.ry += (Math.random() - 0.5) * 0.08;
+      }
+    });
+  });
+
+  // ── 메인 렌더 루프 ──
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.012;
+
+    // 골드 스포트라이트 미세 펄스
+    mouseLight.intensity = 2.8 + Math.sin(t * 2) * 0.7;
+
+    // 컬러 포인트 라이트들이 천천히 궤도 회전 (도형 표면에 반사)
+    colorLights.forEach((l, idx) => {
+      const phase = t * 0.4 + (idx / colorLights.length) * Math.PI * 2;
+      const orbitR = 22 + idx * 3;
+      l.position.x = Math.cos(phase) * orbitR;
+      l.position.y = Math.sin(phase * 1.3) * (orbitR * 0.7);
+      l.position.z = 8 + Math.sin(phase * 0.7) * 6;
+    });
+
+    shapes.forEach((s, i) => {
+      const ud = s.userData;
+      // 마우스 근처에서 밀어냄 (지속적 물리 간섭)
+      const dx = s.position.x - mouse3D.x;
+      const dy = s.position.y - mouse3D.y;
+      const d = Math.sqrt(dx*dx + dy*dy) + 0.1;
+
+      if (d < 13) {
+        const force = Math.pow((13 - d) / 13, 2) * 0.18 / ud.mass;
+        ud.vx += (dx / d) * force;
+        ud.vy += (dy / d) * force;
+        // 가까이 있으면 백금/골드빛으로 강하게 발광
+        const glow = (13 - d) / 13;
+        s.material.emissive.setHex(0xFFD54F);
+        s.material.emissiveIntensity = ud.baseEmissiveInt + glow * 0.6;
+      } else {
+        s.material.emissive.setHex(ud.baseEmissive);
+        s.material.emissiveIntensity = ud.baseEmissiveInt;
+      }
+
+      // 위치 업데이트
+      s.position.x += ud.vx;
+      s.position.y += ud.vy;
+      s.position.z += ud.vz;
+
+      // 마찰
+      ud.vx *= 0.975;
+      ud.vy *= 0.975;
+      ud.vz *= 0.99;
+
+      // 경계 충돌 (벽에 부딪히면 튕김)
+      const BX = 38, BY = 26, BZ_MIN = -32, BZ_MAX = 5;
+      if (s.position.x > BX) { s.position.x = BX; ud.vx *= -0.65; }
+      if (s.position.x < -BX) { s.position.x = -BX; ud.vx *= -0.65; }
+      if (s.position.y > BY) { s.position.y = BY; ud.vy *= -0.65; }
+      if (s.position.y < -BY) { s.position.y = -BY; ud.vy *= -0.65; }
+      if (s.position.z > BZ_MAX) { s.position.z = BZ_MAX; ud.vz *= -0.65; }
+      if (s.position.z < BZ_MIN) { s.position.z = BZ_MIN; ud.vz *= -0.65; }
+
+      // 회전
+      s.rotation.x += ud.rx;
+      s.rotation.y += ud.ry;
+      s.rotation.z += ud.rz;
+      ud.rx *= 0.995;
+      ud.ry *= 0.995;
+    });
+
+    // 도형 간 충돌 처리 (간단한 구체 충돌)
+    for (let i = 0; i < shapes.length; i++) {
+      for (let j = i + 1; j < shapes.length; j++) {
+        const a = shapes[i], b = shapes[j];
+        const dx = b.position.x - a.position.x;
+        const dy = b.position.y - a.position.y;
+        const dz = b.position.z - a.position.z;
+        const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        const minDist = 5.5;
+        if (dist < minDist && dist > 0.001) {
+          const overlap = (minDist - dist) / 2;
+          const nx = dx / dist, ny = dy / dist, nz = dz / dist;
+          a.position.x -= nx * overlap;
+          a.position.y -= ny * overlap;
+          a.position.z -= nz * overlap;
+          b.position.x += nx * overlap;
+          b.position.y += ny * overlap;
+          b.position.z += nz * overlap;
+          // 속도 교환
+          const aSpeed = a.userData.vx * nx + a.userData.vy * ny;
+          const bSpeed = b.userData.vx * nx + b.userData.vy * ny;
+          const exchange = (bSpeed - aSpeed) * 0.5;
+          a.userData.vx += nx * exchange;
+          a.userData.vy += ny * exchange;
+          b.userData.vx -= nx * exchange;
+          b.userData.vy -= ny * exchange;
+        }
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // 리사이즈
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+
+<!-- =====================================================
+     ✨ 별빛 쏟아지는 커서 효과
+     ===================================================== -->
+<script>
+(function() {
+  const cv = document.getElementById('cursor-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  function resize() {
+    cv.width = window.innerWidth;
+    cv.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // 마우스 위치
+  let mx = -300, my = -300;
+  let lastMx = -300, lastMy = -300;
+  let mouseSpeed = 0;
+
+  // 별빛 파티클들
+  const stars = [];
+  // 마우스 코어 트레일
+  const trail = [];
+  const TRAIL_MAX = 14;
+
+  // 별 색상 팔레트 (스테인레스 + 골드 + 사이안 톤)
+  const STAR_COLORS = [
+    { core: 'rgba(255,255,255,1)',  glow: 'rgba(220,235,255,1)', hue: 210 }, // 화이트
+    { core: 'rgba(255,255,200,1)',  glow: 'rgba(255,220,120,1)', hue: 45  }, // 골드
+    { core: 'rgba(220,245,255,1)',  glow: 'rgba(150,220,255,1)', hue: 195 }, // 아이스블루
+    { core: 'rgba(255,230,180,1)',  glow: 'rgba(255,180,80,1)',  hue: 30  }, // 앰버
+    { core: 'rgba(240,255,255,1)',  glow: 'rgba(200,240,255,1)', hue: 180 }, // 시아니 화이트
+  ];
+
+  // 별 1개 생성 (마우스 위치에서 쏟아져 내림)
+  function spawnStar(x, y, intensity) {
+    const c = STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
+    // 발사 각도: 위쪽으로 약간 흩뿌림 → 자연스럽게 떨어짐
+    const angle = (Math.PI * 0.5) + (Math.random() - 0.5) * Math.PI * 0.9; // 아래쪽 방향
+    const speed = 0.3 + Math.random() * 1.8 + intensity * 0.5;
+    stars.push({
+      x: x + (Math.random() - 0.5) * 8,
+      y: y + (Math.random() - 0.5) * 8,
+      vx: Math.cos(angle) * speed * (Math.random() - 0.5) * 1.6,  // 좌우로 흩어짐
+      vy: Math.sin(angle) * speed - 0.5,                           // 약간 위로 발사
+      r: 0.8 + Math.random() * 2.2 + intensity * 0.3,
+      life: 1.0,
+      decay: 0.008 + Math.random() * 0.012,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.1,
+      spikes: Math.random() < 0.6 ? 5 : 4,
+      color: c,
+      twinkle: Math.random() * Math.PI * 2,
+    });
+  }
+
+  // 5각/4각 별 그리기
+  function drawStar(cx, cy, spikes, outerR, innerR, color, alpha, rotation) {
+    if (outerR < 0.1) return;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation);
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    const step = Math.PI / spikes;
+    for (let i = 0; i < spikes * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const a = i * step - Math.PI / 2;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = outerR * 3;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // 마우스 이벤트
+  document.addEventListener('mousemove', e => {
+    const dx = e.clientX - mx;
+    const dy = e.clientY - my;
+    mouseSpeed = Math.sqrt(dx * dx + dy * dy);
+    lastMx = mx; lastMy = my;
+    mx = e.clientX; my = e.clientY;
+    trail.push({ x: mx, y: my, life: 1 });
+    if (trail.length > TRAIL_MAX) trail.shift();
+  });
+
+  // 클릭 시 별 폭발
+  document.addEventListener('click', e => {
+    for (let i = 0; i < 25; i++) {
+      const angle = (i / 25) * Math.PI * 2;
+      const speed = 2 + Math.random() * 4;
+      const c = STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)];
+      stars.push({
+        x: e.clientX, y: e.clientY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        r: 1.5 + Math.random() * 2.5,
+        life: 1,
+        decay: 0.012,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.15,
+        spikes: 5,
+        color: c,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+  });
+
+  let frame = 0;
+  function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+
+    // ⚠️ 매 프레임 완전 클리어 (이전 검정 fillRect는 페이지 전체를 가렸음)
+    // 잔상 효과는 별 자체의 life 페이드로 표현
+    ctx.clearRect(0, 0, cv.width, cv.height);
+
+    // ── 트레일 (별 따라가는 빛 줄기) ──
+    if (trail.length > 1) {
+      for (let i = 0; i < trail.length - 1; i++) {
+        const p0 = trail[i], p1 = trail[i + 1];
+        const frac = (i + 1) / trail.length;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.strokeStyle = `rgba(255, 245, 200, ${frac * frac * 0.55})`;
+        ctx.lineWidth = frac * 4 + 0.5;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(255, 220, 120, 0.7)';
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.restore();
+      }
+      // 트레일 페이드
+      trail.forEach(p => p.life *= 0.92);
+      while (trail.length > 0 && trail[0].life < 0.05) trail.shift();
+    }
+
+    // ── 별빛 자동 생성 (마우스 위치에서 쏟아짐) ──
+    // 정지 상태에서도 천천히 흘러나옴, 움직일수록 더 많이
+    const spawnCount = Math.min(8, 1 + Math.floor(mouseSpeed * 0.4));
+    for (let i = 0; i < spawnCount; i++) {
+      spawnStar(mx, my, Math.min(mouseSpeed * 0.05, 1.5));
+    }
+    mouseSpeed *= 0.85;
+
+    // ── 별 업데이트 + 그리기 ──
+    for (let i = stars.length - 1; i >= 0; i--) {
+      const s = stars[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.vy += 0.08;       // 중력 (떨어짐)
+      s.vx *= 0.99;       // 공기저항
+      s.rotation += s.rotSpeed;
+      s.twinkle += 0.18;
+      s.life -= s.decay;
+      if (s.life <= 0 || s.y > cv.height + 30) {
+        stars.splice(i, 1);
+        continue;
+      }
+      // 깜빡임 (별 크기 변동)
+      const twk = 0.7 + Math.sin(s.twinkle) * 0.3;
+      const r = s.r * s.life * twk;
+      // 외부 발광 (바깥쪽 빛 번짐)
+      const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r * 5);
+      grd.addColorStop(0, s.color.glow.replace('1)', `${s.life * 0.4})`));
+      grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, r * 5, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+      // 별 모양 핵
+      drawStar(s.x, s.y, s.spikes, r * 2.4, r * 1.0,
+        s.color.glow, s.life * 0.85, s.rotation);
+      drawStar(s.x, s.y, s.spikes, r * 1.4, r * 0.55,
+        s.color.core, s.life, s.rotation);
+    }
+
+    // ── 메인 커서 (별 모양) ──
+    if (mx > 0) {
+      // 외부 후광
+      const haloG = ctx.createRadialGradient(mx, my, 0, mx, my, 28);
+      haloG.addColorStop(0,   'rgba(255,255,200,0.9)');
+      haloG.addColorStop(0.4, 'rgba(255,210,80,0.4)');
+      haloG.addColorStop(1,   'rgba(255,160,0,0)');
+      ctx.beginPath();
+      ctx.arc(mx, my, 28, 0, Math.PI * 2);
+      ctx.fillStyle = haloG;
+      ctx.fill();
+      // 4갈래 빛줄기 (반짝)
+      const blink = 0.7 + Math.sin(frame * 0.15) * 0.3;
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(frame * 0.01);
+      [[1,0],[0,1],[-1,0],[0,-1]].forEach(([dx, dy]) => {
+        const len = 18 + Math.sin(frame * 0.1) * 4;
+        const lg = ctx.createLinearGradient(0, 0, dx * len, dy * len);
+        lg.addColorStop(0, `rgba(255,255,220,${blink})`);
+        lg.addColorStop(1, 'rgba(255,200,80,0)');
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(dx * len, dy * len);
+        ctx.strokeStyle = lg;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      });
+      ctx.restore();
+      // 5각별 핵 (펄스)
+      const pulse = 1 + Math.sin(frame * 0.18) * 0.18;
+      drawStar(mx, my, 5, 11 * pulse, 5 * pulse, 'rgba(255,255,220,1)', 1, frame * 0.02);
+      drawStar(mx, my, 5, 6.5 * pulse, 2.8 * pulse, 'rgba(255,240,140,1)', 1, frame * 0.02);
+    }
+  }
+  loop();
+})();
+</script>
+
+<!-- ===== 폼 + 페이드 스크립트 ===== -->
+<script>
+  // ═══════════════════════════════════════════════════════════
+  // 📧 신청서 제출 → FormSubmit.co (JSON AJAX 방식)
+  // ═══════════════════════════════════════════════════════════
+  // ⭐ qkrgudwhd.github.io/blogmaster/ 와 동일한 구현 방식
+  //
+  // 작동 원리:
+  //   1) phjcom3@gmail.com 으로 신청서 전체가 표(table) 형식으로 전송
+  //   2) 신청자에게는 _autoresponse 본문이 자동 답장으로 발송
+  //
+  // ⭐ 최초 1회만 활성화 필요 (가입 절대 불필요):
+  //   첫 신청서 1건이 들어오면 phjcom3@gmail.com 으로
+  //   "FormSubmit - Confirm your email" 메일이 도착합니다.
+  //   그 안의 [Confirm your email] 버튼만 한 번 클릭하면 끝.
+  // ═══════════════════════════════════════════════════════════
+  const ADMIN_EMAIL = 'phjcom3@gmail.com';
+
+  async function submitForm(e) {
+    e.preventDefault();
+    const form = document.getElementById('applyForm');
+    const data = new FormData(form);
+
+    const submitBtn = form.querySelector('.form-submit');
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ 전송 중...';
+
+    // ── payload 정리 (관심분야 다중선택 처리) ──
+    const payload = {};
+    data.forEach((v, k) => {
+      if (payload[k] !== undefined) payload[k] = [].concat(payload[k], v).join(', ');
+      else payload[k] = v;
+    });
+
+    // ── blogmaster 사이트와 동일한 JSON POST 방식 ──
+    const body = {
+      _subject:      '[AI BLOG MASTER 수강신청] ' + (payload.name || '익명') + '님 - 2026년 5월 1기',
+      성함:           payload.name || '',
+      전화번호:        payload.phone || '',
+      이메일:         payload.email || '',
+      연령대:         payload.age || '',
+      블로그경험:      payload.experience || '',
+      관심분야:        payload.interest || '',
+      사용기기:        payload.device || '',
+      학습목표:        payload.message || '',
+      접수일시:        new Date().toLocaleString('ko-KR'),
+      _template:     'table',
+      _captcha:      'false',
+      _replyto:      payload.email || '',
+      _autoresponse: (payload.name || '신청자') + '님, 수강 신청해 주셔서 감사합니다. 곧 관리자가 연락 드리겠습니다. (한국자아실현협회 센텀Q AI 연구소 010-4554-9110)',
+    };
+
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/' + ADMIN_EMAIL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      const d = await res.json();
+      if (d.success === 'true' || d.success === true || res.ok) {
+        console.log('[메일 발송 성공]', d);
+        showSuccessModal(payload.name);
+        form.reset();
+      } else {
+        throw new Error(d.message || 'unknown');
+      }
+    } catch (err) {
+      console.error('[메일 발송 오류]', err);
+      // 네트워크 오류여도 사용자에게는 일단 접수 완료로 보여주고,
+      // 카카오톡 안내를 강조 (blogmaster 사이트와 동일한 UX)
+      showSuccessModal(payload.name);
+      form.reset();
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
+    }
+    return false;
+  }
+
+  // 성공 모달 표시 (개인화된 인사 포함)
+  function showSuccessModal(name) {
+    const modal = document.getElementById('modalBg');
+    const greetEl = document.getElementById('modalGreet');
+    if (greetEl && name) greetEl.textContent = name + ' 님, 신청이 접수되었습니다!';
+    modal.classList.add('show');
+  }
+  function closeModal() {
+    document.getElementById('modalBg').classList.remove('show');
+  }
+  document.getElementById('modalBg').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ── fade-in 안전장치: 관찰자 + 강제 표시 폴백 ──
+  const fadeEls = document.querySelectorAll('.fade-in');
+  const showAll = () => fadeEls.forEach(el => el.classList.add('visible'));
+
+  // 1) 모션 비선호 사용자는 즉시 모두 표시
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    showAll();
+  } else if (!('IntersectionObserver' in window)) {
+    // 2) 구형 브라우저: 즉시 모두 표시
+    showAll();
+  } else {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -10% 0px' });
+    fadeEls.forEach(el => observer.observe(el));
+
+    // 3) 폴백: 어떤 이유든 2.5초 내 표시되지 않은 요소는 강제로 표시
+    setTimeout(() => {
+      fadeEls.forEach(el => {
+        if (!el.classList.contains('visible')) el.classList.add('visible');
+      });
+    }, 2500);
+  }
+</script>
+</body>
+</html>

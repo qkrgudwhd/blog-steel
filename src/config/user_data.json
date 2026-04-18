@@ -1,0 +1,69 @@
+{
+  "_comment": "⚠️ 실제 배포 전 반드시 암호화 또는 환경변수로 분리하세요.",
+  "_version": "2.0.0",
+
+  "company": {
+    "name": "한국자아실현협회",
+    "representative": "박형종",
+    "address": "경남 김해시 주촌면 선지로85 센텀큐시티아파트상가 101호",
+    "phone": "010-4554-9110",
+    "email": "phjcom3@gmail.com",
+    "brand": "센텀Q AI 연구소",
+    "brand_en": "Gimhae Centum Q"
+  },
+
+  "instructor": {
+    "name": "박형종",
+    "title": "33년 경력 베테랑 엔지니어 & 스마트AI경영 전문가",
+    "subtitle": "시니어 디지털 임파워먼트 전도사 | 'AI After Human' 저자 및 시인",
+    "company": "한국자아실현협회 | 센텀Q AI 연구소",
+    "company_en": "Gimhae Centum Q",
+    "bio": "33년간 현장에서 쌓아온 엔지니어링 노하우와 최신 AI 기술을 결합하여, 누구나 인공지능으로 자신만의 블로그 수익 모델을 만들 수 있도록 돕고 있습니다.",
+    "specialties": ["스마트AI경영", "블로그 자동화", "시니어 디지털 교육", "AI 수익화 전략"]
+  },
+
+  "contact": {
+    "email": "phjcom3@gmail.com",
+    "phone": "010-4554-9110",
+    "kakao_openchat_url": "https://open.kakao.com/o/gwcemGqi",
+    "kakao_url": "https://open.kakao.com/o/gwcemGqi",
+    "naver_blog": "https://blog.naver.com/com-365/224254785153",
+    "youtube_video_id": ""
+  },
+
+  "google_auth": {
+    "_comment": "Google Cloud Console에서 발급받은 OAuth 2.0 클라이언트 ID",
+    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+  },
+
+  "email_service": {
+    "_comment": "✅ FormSubmit.co 사용중 (https://formsubmit.co) — 가입/키 발급 불필요. 자세한 활성화 방법은 메일발송_설정가이드.md 참고",
+    "provider": "formsubmit",
+    "endpoint": "https://formsubmit.co/ajax/phjcom3@gmail.com",
+    "admin_email": "phjcom3@gmail.com",
+    "subject_admin": "[Blog Master 신청] OOO 님의 신청서",
+    "auto_reply": "본문은 한글로 자동 발송 (FormSubmit 무료 플랜은 제목 고정)",
+    "monthly_limit_free": 50,
+    "activation_required": "최초 1회: phjcom3@gmail.com 으로 도착하는 'FormSubmit - Confirm your email' 메일 안의 [Confirm] 버튼 1회 클릭만 하면 영구 활성화"
+  },
+
+  "enrollment": {
+    "current_batch": "2026년 5월 1기",
+    "max_students_per_batch": 20
+  },
+
+  "course": {
+    "title": "AI BLOG MASTER 자동화 과정",
+    "batch": "2026년 5월 1기",
+    "duration": "8주 과정",
+    "format": "온라인 + 현장 지원",
+    "price_display": "사전 문의 후 결정"
+  },
+
+  "api_keys": {
+    "_comment": "⚠️ 절대 공개 저장소에 올리지 마세요!",
+    "openai_api_key": "YOUR_OPENAI_API_KEY_HERE",
+    "naver_blog_id": "YOUR_NAVER_BLOG_ID",
+    "encryption_salt": "YOUR_SECRET_SALT_VALUE"
+  }
+}
